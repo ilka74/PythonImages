@@ -56,6 +56,11 @@ class DrawingApp:
         # Привязка правой кнопки мыши к методу pick_color
         self.canvas.bind('<Button-3>', self.pick_color)
 
+        # Функциональные горячие клавиши быстрого действия.
+        # Открывают диалоговые окна для сохранения в файл или выбора цвета соответственно
+        self.root.bind('<Control-s>', self.save_image)
+        self.root.bind('<Control-c>', self.choose_color)
+
     def setup_ui(self):
         """
         Этот метод отвечает за создание и расположение виджетов управления.
@@ -141,7 +146,7 @@ class DrawingApp:
         self.image = Image.new("RGB", (600, 400), "white")
         self.draw = ImageDraw.Draw(self.image)
 
-    def choose_color(self):
+    def choose_color(self, event=None):
         """
         Функция открывает стандартное диалоговое окно выбора цвета и устанавливает выбранный цвет как текущий для кисти.
         Метод colorchooser.askcolor() открывает диалоговое окно выбора цвета.
@@ -176,10 +181,11 @@ class DrawingApp:
 
             print(f"Выбранный цвет: {self.pen_color}")
 
-    def save_image(self):
+    def save_image(self, event=None):
         """
         Позволяет пользователю сохранить изображение, используя стандартное диалоговое окно для сохранения файла.
         Поддерживает только формат PNG. В случае успешного сохранения выводится сообщение об успешном сохранении.
+        Принимает аргумент event, необходимый для корректной работы с bind().
         """
         file_path = filedialog.asksaveasfilename(filetypes=[('PNG files', '*.png')])
         if file_path:
