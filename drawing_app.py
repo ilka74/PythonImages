@@ -37,12 +37,10 @@ class DrawingApp:
         self.canvas = tk.Canvas(root, width=600, height=400, bg='white')
         self.canvas.pack()
 
-        self.setup_ui()
-
-        self.last_x, self.last_y = None, None
-
         # Начальный цвет кисти
         self.pen_color = 'black'
+
+        self.last_x, self.last_y = None, None
 
         # Хранение предыдущего цвета кисти
         self.previous_color = self.pen_color
@@ -60,6 +58,8 @@ class DrawingApp:
         # Открывают диалоговые окна для сохранения в файл или выбора цвета соответственно
         self.root.bind('<Control-s>', self.save_image)
         self.root.bind('<Control-c>', self.choose_color)
+
+        self.setup_ui()
 
     def setup_ui(self):
         """
@@ -95,6 +95,10 @@ class DrawingApp:
         brush_size_menu = tk.OptionMenu(
             control_frame, self.brush_size_var, *sizes, command=self.update_brush_size)
         brush_size_menu.pack(side=tk.LEFT)
+
+        # Label для предварительного просмотра цвета кисти
+        self.color_preview = tk.Label(control_frame, width=2, height=1, bg=self.pen_color)
+        self.color_preview.pack(side=tk.LEFT, padx=5)
 
     def update_brush_size(self, selected_size):
         """
@@ -152,15 +156,18 @@ class DrawingApp:
         Метод colorchooser.askcolor() открывает диалоговое окно выбора цвета.
         Он принимает параметр, который задает начальный цвет (в данном случае это текущий цвет кисти self.pen_color).
         """
-        self.pen_color = colorchooser.askcolor(color=self.pen_color)[1]
+        new_color = colorchooser.askcolor(color=self.pen_color)[1]
+        if new_color:
+            self.pen_color = new_color
+            self.color_preview.config(bg=self.pen_color) # Обновление цвета в Label
 
     def use_eraser(self):
         """
         Переключает цвет кисти на цвет фона (белый) для использования в качестве ластика.
         Сохраняем текущий цвет в переменную self.previous_color, а затем изменяем цвет кисти на белый.
         """
-        self.previous_color = self.pen_color
         self.pen_color = 'white'
+        self.color_preview.config(bg=self.pen_color)  # Обновление цвета в Label
 
     def pick_color(self, event):
         """
@@ -178,6 +185,7 @@ class DrawingApp:
         if 0 <= x < 600 and 0 <= y < 400:
             color = self.image.getpixel((x, y))
             self.pen_color = f'#{color[0]:02x}{color[1]:02x}{color[2]:02x}'
+            self.color_preview.config(bg=self.pen_color)  # Обновление цвета в Label
 
             print(f"Выбранный цвет: {self.pen_color}")
 
