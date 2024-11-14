@@ -8,7 +8,7 @@
 """
 
 import tkinter as tk
-from tkinter import colorchooser, filedialog, messagebox
+from tkinter import colorchooser, filedialog, messagebox, simpledialog
 from PIL import Image, ImageDraw
 
 
@@ -31,10 +31,12 @@ class DrawingApp:
         self.root = root
         self.root.title("Рисовалка с сохранением в PNG")
 
-        self.image = Image.new("RGB", (600, 400), "white")
+        self.width = 600
+        self.height = 400
+        self.image = Image.new("RGB", (self.width, self.height), "white")
         self.draw = ImageDraw.Draw(self.image)
 
-        self.canvas = tk.Canvas(root, width=600, height=400, bg='white')
+        self.canvas = tk.Canvas(root, width=self.width, height=self.height, bg='white')
         self.canvas.pack()
 
         # Начальный цвет кисти
@@ -70,6 +72,7 @@ class DrawingApp:
         color_button: кнопка для выбора цвета. Связана с методом choose_color;
         save_button: кнопка для сохранения изображения. Связана с методом save_image;
         eraser_button: кнопка "ластик" для стирания части изображения. Связана с методом use_eraser;
+        size_button: кнопка, открывающая диалоговое окно для ввода новых размеров холста;
         sizes: список предустановленных размеров кисти;
         self.brush_size_var: установка начального значения для размера кисти с помощью переменной типа StringVar;
         brush_size_menu: создаем выпадающий список для выбора размера кисти, который обновляет размер кисти при выборе.
@@ -89,16 +92,46 @@ class DrawingApp:
         eraser_button = tk.Button(control_frame, text="Ластик", command=self.use_eraser)
         eraser_button.pack(side=tk.LEFT)
 
+        size_button = tk.Button(control_frame, text="Изменить размер", command=self.change_canvas_size)
+        size_button.pack(side=tk.LEFT)
+
         sizes = [1, 2, 5, 10]
 
         self.brush_size_var = tk.StringVar(value=sizes[0])
-        brush_size_menu = tk.OptionMenu(
-            control_frame, self.brush_size_var, *sizes, command=self.update_brush_size)
+        brush_size_menu = tk.OptionMenu(control_frame, self.brush_size_var, *sizes, command=self.update_brush_size)
         brush_size_menu.pack(side=tk.LEFT)
 
         # Label для предварительного просмотра цвета кисти
         self.color_preview = tk.Label(control_frame, width=2, height=1, bg=self.pen_color)
         self.color_preview.pack(side=tk.LEFT, padx=5)
+
+    def change_canvas_size(self):
+        """
+        Метод изменяет размер холста, позволяя пользователю задать новые размеры через диалоговые окна
+        new_width: новая ширина холста;
+        new_height: новая высота холста;
+        self.canvas.config: настройка виджета Canvas с новыми размерами
+        self.image: новый объект изображения с заданными размерами и белым фоном
+        self.draw: обновление объекта ImageDraw для рисования на новом холсте
+        self.clear_canvas(): очистка холста, чтобы удалить предыдущие рисунки и подготовить его для новой работы.
+        """
+        # Скрываем главное окно, чтобы диалоговое окно было на переднем плане
+        self.root.withdraw()
+
+        new_width = simpledialog.askinteger("Ширина", "Введите ширину холста", minvalue=100, maxvalue=1500)
+        new_height = simpledialog.askinteger("Высота", "Введите высоту холста", minvalue=100, maxvalue=1000)
+
+        # Возвращаем главное окно на передний план
+        self.root.deiconify()
+
+        if new_width and new_height:
+            self.width = new_width
+            self.height = new_height
+
+            self.canvas.config(width=self.width, height=self.height)
+            self.image = Image.new("RGB", (self.width, self.height), "white")
+            self.draw = ImageDraw.Draw(self.image)
+            self.clear_canvas()
 
     def update_brush_size(self, selected_size):
         """
@@ -147,7 +180,7 @@ class DrawingApp:
         Очищает холст, удаляя все нарисованное, и пересоздает объекты Image и ImageDraw для нового изображения
         """
         self.canvas.delete("all")
-        self.image = Image.new("RGB", (600, 400), "white")
+        self.image = Image.new("RGB", (self.width, self.height), "white")
         self.draw = ImageDraw.Draw(self.image)
 
     def choose_color(self, event=None):
@@ -182,7 +215,7 @@ class DrawingApp:
         - выводим код цвета в консоль (для отладки)
         """
         x, y = event.x, event.y
-        if 0 <= x < 600 and 0 <= y < 400:
+        if 0 <= x < self.width and 0 <= y < self.height:
             color = self.image.getpixel((x, y))
             self.pen_color = f'#{color[0]:02x}{color[1]:02x}{color[2]:02x}'
             self.color_preview.config(bg=self.pen_color)  # Обновление цвета в Label
