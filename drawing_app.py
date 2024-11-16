@@ -9,7 +9,7 @@
 
 import tkinter as tk
 from tkinter import colorchooser, filedialog, messagebox, simpledialog
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageTk
 
 
 class DrawingApp:
@@ -72,6 +72,9 @@ class DrawingApp:
         color_button: кнопка для выбора цвета. Связана с методом choose_color;
         save_button: кнопка для сохранения изображения. Связана с методом save_image;
         eraser_button: кнопка "ластик" для стирания части изображения. Связана с методом use_eraser;
+        text_button: кнопка "текст" для ввода текста пользователем. Связана с методом add_text;
+        change_bg_button: кнопка "изменить фон" для изменения фона холста пользователем.
+            Цвет фона можно выбрать произвольный. Связана с методом change_background_color;
         size_button: кнопка, открывающая диалоговое окно для ввода новых размеров холста;
         sizes: список предустановленных размеров кисти;
         self.brush_size_var: установка начального значения для размера кисти с помощью переменной типа StringVar;
@@ -92,6 +95,12 @@ class DrawingApp:
         eraser_button = tk.Button(control_frame, text="Ластик", command=self.use_eraser)
         eraser_button.pack(side=tk.LEFT)
 
+        text_button = tk.Button(control_frame, text='Текст', command=self.add_text)
+        text_button.pack(side=tk.LEFT)
+
+        change_bg_button = tk.Button(control_frame, text="Изменить фон", command=self.change_background_color)
+        change_bg_button.pack(side=tk.LEFT)
+
         size_button = tk.Button(control_frame, text="Изменить размер", command=self.change_canvas_size)
         size_button.pack(side=tk.LEFT)
 
@@ -104,6 +113,47 @@ class DrawingApp:
         # Label для предварительного просмотра цвета кисти
         self.color_preview = tk.Label(control_frame, width=2, height=1, bg=self.pen_color)
         self.color_preview.pack(side=tk.LEFT, padx=5)
+
+    def change_background_color(self):
+        """
+        Метод позволяет пользователю выбрать новый цвет фона холста. По умолчанию он белый
+        self.canvas.config: изменяем цвет фона холста;
+        self.image: создаем новое изображение с новым цветом фона;
+        self.update_canvas(): обновляем холст, чтобы он отображал новый цвет
+        """
+        new_color = colorchooser.askcolor()[1]
+        if new_color:
+            self.canvas.config(bg=new_color)
+            self.image = Image.new("RGB", (self.width, self.height), new_color)
+            self.draw = ImageDraw.Draw(self.image)
+            self.update_canvas()
+
+    def add_text(self):
+        """
+        Метод для добавления нового текста.
+        После ввода текста необходимо выбрать координаты для того, чтобы определить его расположение
+        """
+        # Скрываем главное окно, чтобы диалоговое окно было на переднем плане
+        self.root.withdraw()
+
+        text = simpledialog.askstring("Введите текст", "Введите текст для добавления на холст:")
+        if text:
+            x, y = (simpledialog.askinteger("Координаты", "Введите X:"),
+                    simpledialog.askinteger("Координаты", "Введите Y:"))
+            if x is not None and y is not None:
+                self.draw.text((x, y), text, fill=self.pen_color)
+                self.update_canvas()
+
+        # Возвращаем главное окно на передний план
+        self.root.deiconify()
+
+    def update_canvas(self):
+        """
+        Используется для обновления виджета Canvas, чтобы отображать изменения в изображении.
+        """
+        self.canvas.delete("all")
+        self.photo = ImageTk.PhotoImage(self.image)
+        self.canvas.create_image(0, 0, image=self.photo, anchor=tk.NW)
 
     def change_canvas_size(self):
         """
